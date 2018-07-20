@@ -66,4 +66,128 @@ gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.drawArrays(gl.POINTS, 0, 1);
  ```
 
-### 绘制一个点（使用变量版本）
+### 自定义点的位置
+ - 使用 `attribute` 变量
+`attribute` 变量是一种 `GLSL ES` 变量，被用来从外部向顶点着色器内传输数据，只有顶点着色器能使用它。步骤：
+   1. 在顶点着色器中，声明 `attribute` 变量；
+   2. 将 `attribute` 变量赋值给 `gl_Position` 变量；
+   3. 向 `attribute` 变量传输数据。
+```
+// 顶点着色器程序
+const VSHADER_SOURCE = `
+    // 存储限定符 类型 变量名
+    attribute vec4 a_Position;
+    void main() {
+        // 设置坐标
+        gl_Position = a_Position;
+        // 设置尺寸
+        gl_PointSize = 10.0;
+    }
+`;
+
+/**
+ * 获取attribute变量的存储位置
+ * 
+ * @param gl.program 程序对象,包括顶点着色器和片元着色器,执行initShaders后生成的
+ * @param a_Position 为变量的名称
+ * 
+ * @return 存储地址 > 0
+ */
+var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+
+/**
+ * 将顶点位置传输给attribute变量
+ * 
+ * @description
+ * 将数据传输给location参数指定的attribute变量。
+ * gl.vertexAttrib1f()仅传输一个值，这个值将被填充到attribute变量的第1个分量中，
+ * 第2、3个分量将被设定为0.0，第4个分量将被设定为1.0。
+ * 
+ * @example
+ * gl.vertexAttrib1f(location, v0)
+ * gl.vertexAttrib2f(location, v0, v1)
+ * gl.vertexAttrib3f(location, v0, v1, v2)
+ * gl.vertexAttrib4f(location, v0, v1, v2, v3)
+ * 
+ * @param location 指定attribute变量的存储位置
+ * @param v0,v1,v2,v3 指定传输给attribute变量的四个分量的值
+ */
+gl.vertexAttrib3f(a_Position, 0.0, 0.0, 0.0);
+```
+
+### 自定义颜色
+ ```
+// 片元着色器
+// 注册 u_FragColor 变量，声明类型
+const FSHADER_SOURCE = `
+    precision mediump float;
+    uniform vec4 u_FragColor;
+    void main() {
+        // 设置颜色
+        gl_FragColor = u_FragColor;
+    }
+`;
+
+/**
+ * 获取u_FragColor变量的存储位置
+ */
+var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+
+// 将点的颜色传输到u_FragColor变量中，rgba => (0, 0, 0, 1)
+gl.uniform4f(u_FragColor, 0, 0, 0, 1);
+
+// 绘制点
+gl.drawArrays(gl.POINTS, 0, 1);
+ ```
+
+### 通过鼠标点击绘制点，每个象限的有各自的颜色
+ ```
+// 注册鼠标点击事件响应函数
+canvas.onmousedown = function(ev) { click(ev, gl, canvas, a_Position, u_FragColor); };
+
+// 鼠标点击位置数组
+var g_points = [];
+
+// 存储点颜色
+var g_colors = [];
+
+// 声明点击事件的处理函数
+function click(ev, gl, canvas, a_Position, u_FragColor) {
+    // 鼠标点击的x,y坐标
+    var x = ev.clientX;
+    var y = ev.clientY;
+    var rect = ev.target.getBoundingClientRect();
+
+    x = ((x - rect.left) - canvas.height / 2) / (canvas.height / 2);
+    y = ((canvas.width / 2) - (y - rect.top)) / (canvas.width / 2);
+    // 将坐标存储到g_points数组中
+    if (x >= 0.0 && y >= 0.0) {
+        // 第一象限 红色
+        g_colors.push([1.0, 0.0, 0.0, 1.0]);
+    } else if (x < 0.0 && y < 0.0) {
+        // 第三象限 绿色
+        g_colors.push([0.0, 1.0, 0.0, 1.0]);
+    } else {
+        // 第二，第四象限 白色
+        g_colors.push([1.0, 1.0, 1.0, 1.0]);
+    }
+    g_points.push([x, y]);
+
+    // 清除<canvas>
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    var len = g_points.length;
+    for (var i = 0; i < len; i++) {
+        var xy = g_points[i];
+        var rgba = g_colors[i];
+
+        // 将点的位置传递到变量中a_Position
+        gl.vertexAttrib3f(a_Position, xy[0], xy[1], 0.0);
+        // 将点的颜色传输到u_FragColor变量中
+        gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+
+        // 绘制点
+        gl.drawArrays(gl.POINTS, 0, 1);
+    }
+}
+ ```
