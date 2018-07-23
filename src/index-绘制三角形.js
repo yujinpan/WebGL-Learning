@@ -17,17 +17,11 @@ if (!gl) {
 // 着色器
 // 顶点着色器程序
 const VSHADER_SOURCE = `
-    // x1 = x * cosb - y * sinb
-    // y1 = x * sinb + y * cosb
     // 存储限定符
     attribute vec4 a_Position;
-    uniform float u_CosB, u_SinB;
     void main() {
         // 设置坐标
-        gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;
-        gl_PointSize.y = a_Position.x * u_SinB + a_Position.y * u_CosB;
-        gl_PointSize.z = a_Position.z;
-        gl_PointSize.w = 1.0;
+        gl_Position = a_Position;
         // 设置尺寸
         // gl_PointSize = 10.0;
     }
@@ -58,12 +52,6 @@ if (n < 0) {
 var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
 gl.uniform4f(u_FragColor, 1, 1, 0, 1);
 
-// 旋转角度
-var ANGLE = -30.0;
-
-// 将旋转图形所需的数据传输给顶点着色器
-var radian = Math.PI * ANGLE / 180;
-
 // 指定清空<canvas>的颜色
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -87,7 +75,7 @@ gl.clear(gl.COLOR_BUFFER_BIT);
  * @param first 指定从哪个顶点开始绘制（int）
  * @param count 指定绘制需要用到多少个顶点（int）
  */
-gl.drawArrays(gl.TRIANGLES, 0, 3);
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 
 /**
@@ -100,9 +88,10 @@ gl.drawArrays(gl.TRIANGLES, 0, 3);
  */
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
-        0, 0.5,
         -0.5, -0.5,
-        0.5, -0.5
+        0.5, -0.5, 
+        -0.5, 0.5, 
+        0.5, 0.5
     ]);
     var n = 3;
 

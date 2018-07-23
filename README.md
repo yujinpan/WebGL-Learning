@@ -191,3 +191,62 @@ function click(ev, gl, canvas, a_Position, u_FragColor) {
     }
 }
  ```
+
+ ### 绘制多个点
+
+ #### 使用缓冲区对象
+ 流程：先创建一个缓冲区，然后向其中写入顶点数据，一次性地向顶点着色器传入多个顶点的 attribute 变量的数据。
+  - 创建缓冲区对象（gl.createBuffer()）。
+  - 绑定缓冲区对象（gl.bindBuffer()）。
+  - 将数据写入缓冲区对象（gl.bufferData()）。
+  - 将缓冲区对象分配给一个 attribute 变量（gl.vertexAttribPointer()）。
+  - 开启 attribute 变量（gl.enableVertexAttribArray()）。
+```
+function initVertexBuffers(gl) {
+    var vertices = new Float32Array([
+        0.0, 0.5, -0.5, 0.5, 0.5, -0.5
+    ]);
+    var n = 3;
+
+    // 第一步
+    // 创建缓冲区对象
+    var vertexBuffer = gl.createBuffer();
+    
+    // 将缓冲区对象绑定到目标
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+    // 第二步
+    // 向缓冲区对象中写入数据
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    // 第三步
+    // 将缓冲区对象分配给 a_Position 对象
+    // 位置信息 2维数组 浮点类型
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+
+    // 第四步
+    // 连接 a_Position 变量与分配给它的缓冲区对象
+    gl.enableVertexAttribArray(a_Position);
+
+    // 第五步 绘制
+
+    return n;
+}
+```
+
+#### 绘制模式
+> gl.drawArrays(gl.POINTS, 0, n) 第一个参数
+
+ - gl.POINTS 一系列点
+ - gl.LINES 一系列单独的线条 (v0, v1), (v2, v3)
+ - gl.LINES_STRIP 一系列连接的线段 (v0, v1), (v1, v2)
+ - gl.LINES_LOOP 一系列连接的线段 (v0, v1), (v1, v2), (v2, v0)
+ - gl.TRIANGLES 一系列单独的三角形 (v0, v1, v2), (v3, v4, v5)
+ - gl.TRIANGLES 一系列带形状的三角形 (v0, v1, v2), (v2, v1, v3)
+
+前三个点构成第一个三角形，从第二个点开始的三个点构成第二个三角形，与第一个三角形共一条边
+
+ - gl.TRIANGLES 一系列三角形组成的类似与扇形的图形 (v0, v1, v2), (v0, v2, v3)
+
+前三个点构成第一个三角形，接下来的一个点和前一个三角形的最后一调边组成接下来的一个三角形
+
