@@ -19,10 +19,10 @@ if (!gl) {
 const VSHADER_SOURCE = `
     // 存储限定符
     attribute vec4 a_Position;
-    uniform mat4 u_ModelMatrix;
+    uniform mat4 u_xformMatrix;
     void main() {
         // 设置坐标
-        gl_Position = u_ModelMatrix * a_Position;
+        gl_Position = u_xformMatrix * a_Position;
     }
 `;
 
@@ -51,32 +51,50 @@ if (n < 0) {
 var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
 gl.uniform4f(u_FragColor, 1, 1, 0, 1);
 
-// 使用函数库重写之前的手动构建矩阵
-// 为旋转矩阵创建 Matrix4 对象
-// var xformMatrix = new Matrix4();
-// 将 xformMatrix 设置为旋转矩阵
-// 该方法接收角制度参数，而非之前的弧制度，1° = PI/180
-// x,y,z 分别为 x,y,z 轴的旋转角度/平移距离/缩放比率
-// xformMatrix.setTranslate(0.5, 0.0, 0.0);
-// xformMatrix.setScale(0.5, 1.0, 1.0);
-// xformMatrix.setRotate(-30, 0, 0);
+// 旋转变换
+// 旋转角度
+// var ANGLE = -90.0;
 
-// 创建 Matrix4 对象进行 模型变换
-var modelMatrix = new Matrix4();
+// 将旋转图形所需的数据传输给顶点着色器
+// var radian = Math.PI * ANGLE / 180;
+// var cosB = Math.cos(radian);
+// var sinB = Math.sin(radian);
 
-// 计算模型矩阵
-// 带 set 前缀的方法为计算出变换矩阵存储
-// 不带 set 前缀的方法为之前的结果与计算出变换矩阵后的结果相乘的结果
-var ANGLE = -10;
-var Tx = 0.5;
-modelMatrix.setRotate(ANGLE, 0, 0, 1);
-modelMatrix.translate(Tx, 0, 0);
+// 注意 WebGL 中得矩阵是**列主序**的
+// var xformMatrix = new Float32Array([
+//     cosB, sinB, 0.0, 0.0,
+//     -sinB,cosB, 0.0, 0.0,
+//     0.0, 0.0, 1.0, 0.0,
+//     0.0, 0.0, 0.0, 1.0
+// ]);
+
+// 平移变换
+// var Tx = 0.5, Ty = 0.5, Tz = 0.0;
+
+// 注意WebGL 中得矩阵是**列主序**的
+// var xformMatrix = new Float32Array([
+//     1.0, 0.0, 0.0, 0.0,
+//     0.0, 1.0, 0.0, 0.0,
+//     0.0, 0.0, 1.0, 0.0,
+//     Tx, Ty, Tz, 1.0
+// ]);
+
+// 缩放变换
+var Sx = 1.0, Sy = 1.5, Sz = 1.0;
+
+// 注意WebGL 中得矩阵是**列主序**的
+var xformMatrix = new Float32Array([
+    Sx, 0.0, 0.0, 0.0,
+    0.0, Sy, 0.0, 0.0,
+    0.0, 0.0, Sz, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]);
 
 // 将旋转矩阵传输给顶点着色器
-var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+var u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix');
 
 // 传入数据
-gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix);
 
 // 指定清空<canvas>的颜色
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
