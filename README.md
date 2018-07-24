@@ -250,3 +250,98 @@ function initVertexBuffers(gl) {
 
 前三个点构成第一个三角形，接下来的一个点和前一个三角形的最后一调边组成接下来的一个三角形
 
+#### 变换矩阵
+
+```
+x1   a b c   x
+y1 = d e f * y
+z1   g h i   z
+ 
+分解得 =>
+
+x1 = ax + by + cz;
+y1 = dx + ey + fz;
+z1 = gx + hy + iz;
+```
+
+##### 旋转矩阵
+
+```
+x1 = x*cosB - y*sinB;
+y1 = x*sinB + y*cosB;
+z1 = z;
+
+与变换矩阵公式比较可得 => 
+
+a = cosB; b = -sinB; c = 0;
+d = sinb; e = cosB; c = 0;
+g = 0;    h = 0;     i = 1;
+
+得到旋转变换矩阵公式 => 
+
+x1   cosB -sinB 0   x
+y1 = sinB cosB 0 * y
+z1   0    0     1   z
+
+统一使用 4*4 矩阵可得 => 
+
+x1   cosB -sinB 0 0   x
+y1 = sinB cosB 0 0 * y
+z1   0    0     1 0   z
+1    0    0     0 1   1
+```
+
+##### 平移矩阵
+> 由于 3x3 矩阵没有常量，所以增加至 4x4 矩阵，增加一个常量
+
+```
+// 变换矩阵
+x1   a b c d   x
+y1 = e f g h * y
+z1   i j k l   z
+1    m n o p   1
+
+分解得 =>
+
+x1 = ax + by + cz + d;
+y1 = ex + fy + gz + h;
+z1 = ix + jy + kz + l;
+1  = mx + ny + oz + p;
+
+// 平移方程式
+x1 = x + Tx;
+y1 = y + Ty;
+z1 = z + Tz;
+
+比较可得 =>
+
+a = 1; b = 0; c = 0;
+e = 0; f = 1; g = 0;
+i = 0; j = 0; k = 1;
+m = 0; n = 0; o = 0;
+p = 1;
+
+得到平移变换矩阵公式 =>
+
+x1   1 0 0 Tx   x
+y1 = 0 1 0 Ty * y
+z1   0 0 1 Tz   z
+1    0 0 0 1    1
+```
+
+##### 缩放矩阵
+
+```
+// 设 x,y,z 所放量分别为 Sx,Sy,Sz
+x1 = Sx * x;
+y1 = Sy * y;
+z1 = Sz * z;
+
+比较 4*4 变换公式可得 =>
+
+x1   Sx 0 0 0   x
+y1 = 0 Sy 0 0 * y
+z1   0 0 Sz 0   z
+1    0 0 0  1   1
+```
+

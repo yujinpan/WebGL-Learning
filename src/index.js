@@ -17,19 +17,12 @@ if (!gl) {
 // 着色器
 // 顶点着色器程序
 const VSHADER_SOURCE = `
-    // x1 = x * cosb - y * sinb
-    // y1 = x * sinb + y * cosb
     // 存储限定符
     attribute vec4 a_Position;
-    uniform float u_CosB, u_SinB;
+    uniform mat4 u_xformMatrix;
     void main() {
         // 设置坐标
-        gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;
-        gl_PointSize.y = a_Position.x * u_SinB + a_Position.y * u_CosB;
-        gl_PointSize.z = a_Position.z;
-        gl_PointSize.w = 1.0;
-        // 设置尺寸
-        // gl_PointSize = 10.0;
+        gl_Position = u_xformMatrix * a_Position;
     }
 `;
 
@@ -58,11 +51,50 @@ if (n < 0) {
 var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
 gl.uniform4f(u_FragColor, 1, 1, 0, 1);
 
+// 旋转变换
 // 旋转角度
-var ANGLE = -30.0;
+// var ANGLE = -90.0;
 
 // 将旋转图形所需的数据传输给顶点着色器
-var radian = Math.PI * ANGLE / 180;
+// var radian = Math.PI * ANGLE / 180;
+// var cosB = Math.cos(radian);
+// var sinB = Math.sin(radian);
+
+// 注意 WebGL 中得矩阵是**列主序**的
+// var xformMatrix = new Float32Array([
+//     cosB, sinB, 0.0, 0.0,
+//     -sinB,cosB, 0.0, 0.0,
+//     0.0, 0.0, 1.0, 0.0,
+//     0.0, 0.0, 0.0, 1.0
+// ]);
+
+// 平移变换
+// var Tx = 0.5, Ty = 0.5, Tz = 0.0;
+
+// 注意WebGL 中得矩阵是**列主序**的
+// var xformMatrix = new Float32Array([
+//     1.0, 0.0, 0.0, 0.0,
+//     0.0, 1.0, 0.0, 0.0,
+//     0.0, 0.0, 1.0, 0.0,
+//     Tx, Ty, Tz, 1.0
+// ]);
+
+// 缩放变换
+var Sx = 1.0, Sy = 1.5, Sz = 1.0;
+
+// 注意WebGL 中得矩阵是**列主序**的
+var xformMatrix = new Float32Array([
+    Sx, 0.0, 0.0, 0.0,
+    0.0, Sy, 0.0, 0.0,
+    0.0, 0.0, Sz, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]);
+
+// 将旋转矩阵传输给顶点着色器
+var u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix');
+
+// 传入数据
+gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix);
 
 // 指定清空<canvas>的颜色
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -100,15 +132,14 @@ gl.drawArrays(gl.TRIANGLES, 0, 3);
  */
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
-        0, 0.5,
-        -0.5, -0.5,
+        0, 0.5, -0.5, -0.5,
         0.5, -0.5
     ]);
     var n = 3;
 
     // 创建缓冲区对象
     var vertexBuffer = gl.createBuffer();
-    if(!vertexBuffer) {
+    if (!vertexBuffer) {
         console.log('Failed to create the buffer object');
         return -1;
     }
