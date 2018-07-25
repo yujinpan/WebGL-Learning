@@ -51,32 +51,58 @@ if (n < 0) {
 var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
 gl.uniform4f(u_FragColor, 1, 1, 0, 1);
 
-// 旋转速度（度/秒）
-var ANGLE_STEP = 45.0;
+// 使用函数库重写之前的手动构建矩阵
+// 为旋转矩阵创建 Matrix4 对象
+// var xformMatrix = new Matrix4();
+// 将 xformMatrix 设置为旋转矩阵
+// 该方法接收角制度参数，而非之前的弧制度，1° = PI/180
+// x,y,z 分别为 x,y,z 轴的旋转角度/平移距离/缩放比率
+// xformMatrix.setTranslate(0.5, 0.0, 0.0);
+// xformMatrix.setScale(0.5, 1.0, 1.0);
+// xformMatrix.setRotate(-30, 0, 0);
+
+// 创建 Matrix4 对象进行 模型变换
+var modelMatrix = new Matrix4();
+
+// 计算模型矩阵
+// 带 set 前缀的方法为计算出变换矩阵存储
+// 不带 set 前缀的方法为之前的结果与计算出变换矩阵后的结果相乘的结果
+var ANGLE = -10;
+var Tx = 0.5;
+modelMatrix.setRotate(ANGLE, 0, 0, 1);
+modelMatrix.translate(Tx, 0, 0);
+
+// 将旋转矩阵传输给顶点着色器
+var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+
+// 传入数据
+gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
 // 指定清空<canvas>的颜色
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-// 获取 u_ModelMatrix 变量的存储位置
-var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+/**
+ * 清空<canvas>
+ * 
+ * @param buffer 指定待清空的缓冲区，位操作符可用来指定多个缓冲区
+ * @param gl.COLOR_BUFFER_BIT 指定颜色缓冲
+ * @param gl.DEPTH_BUFFER_BIT 指定深度缓冲区
+ * @param gl.STENCIL_BUFFER_BIT 指定模板缓冲区
+ */
+gl.clear(gl.COLOR_BUFFER_BIT);
 
-// g_last: 记录上一次调用 animate 函数的时刻
-var g_last = Date.now();
-// 三角形的当前旋转角度
-var currentAngle = 0.0;
-// 模型矩阵
-var modelMatrix = new Matrix4();
+/**
+ * 绘制一个点
+ * 
+ * @param mode 指定绘制的方式，可以接收以下常量符号
+ * gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP,
+ * gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN
+ * 
+ * @param first 指定从哪个顶点开始绘制（int）
+ * @param count 指定绘制需要用到多少个顶点（int）
+ */
+gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-// 开始绘制三角形
-var tick = function() {
-    // 更新旋转角
-    currentAngle = animate(currentAngle);
-    // 绘制三角形
-    draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix);
-    // 请求浏览器调用 tick
-    requestAnimationFrame(tick);
-};
-tick();
 
 /**
  * 1.创建顶点缓冲区对象
@@ -88,8 +114,7 @@ tick();
  */
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
-        0, 0.5, 
-        -0.5, -0.5,
+        0, 0.5, -0.5, -0.5,
         0.5, -0.5
     ]);
     var n = 3;
@@ -117,42 +142,4 @@ function initVertexBuffers(gl) {
     gl.enableVertexAttribArray(a_Position);
 
     return n;
-}
-
-/**
- * 绘制三角形
- * 1.设置旋转矩阵
- * 2.将矩阵传入着色器
- * 3.清理画板
- * 4.绘制
- */
-function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
-    // 设置平移 + 缩放 + 旋转矩阵
-    // 模型变换中顺序为 旋转 * 平移 * 缩放
-    modelMatrix.setRotate(currentAngle, 0, 0, 1);
-    modelMatrix.scale(0.5, 0.5, 0.5);
-    modelMatrix.translate(0.5, 0, 0);
-
-    // 将旋转矩阵传输给顶点着色器
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-    // 清除 <canvas>
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // 绘制三角形
-    gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-
-/**
- * 获取旋转角度
- * g_last: 记录上一次调用函数的时刻
- */
-function animate(angle) {
-    // 计算距离上次调用经过多久的时间
-    var now = Date.now();
-    var elapsed = now - g_last;
-    g_last = now;
-    // 根据上次调用的时间，更新当前旋转角度
-    var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0;
-    return newAngle %= 360;
 }

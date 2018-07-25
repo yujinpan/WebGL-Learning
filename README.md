@@ -364,3 +364,68 @@ z1   0 0 Sz 0   z
 最后可先在 JavaScript 中计算 (<旋转矩阵> * <平移矩阵>)，再将得到的矩阵传入顶点着色器。
  ```
 
+#### 动画 - 基础
+> 不断的擦除和重绘三角形。
+
+ - 机制一：在不同时刻反复调用同一个函数绘制三角形。
+ - 机制二：每次绘制之前，清除上次的内容，并使三角形旋转相应角度。
+
+```
+// 定义旋转速度（度/秒）
+var ANGLE_STEP = 45.0;
+
+// 记录三角形当前的旋转速度
+var currentAngle = 0.0;
+
+// 记录三角形更新角度的时间(animate执行时的)
+var g_last = Date.now();
+
+// 创建模型矩阵
+var modelMatrix = new Matrix4();
+
+// 开始绘制三角形
+// 1.更新角度 2.绘制 3.重复
+var tick = function() {
+    // 更新旋转角度
+    currentAngle = animate(currentAngle);
+    // 绘制
+    draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix);
+    // 请求浏览器调用 tick
+    // 这里不用 interval 的原因是 interval 在浏览器当前标签未激活时也执行
+    // 而 requrestAnimationFrame 只有浏览器当前标签激活才执行
+    requestAnimationFrame(tick);
+}
+tick();
+
+// 更新旋转角度
+function animate(angle) {
+    // 计算距离上次调用经过了多久
+    var now = Date.now();
+    var elapsed = now - g_last;
+    g_last = now;
+    // 根据距离上次调用的时间，计算旋转角度
+    var newAngle = angule + (ANGULE_STEP * elapsed)/1000;
+    // 转换为一周内
+    return newAngle %= 360;
+}
+
+// 绘制
+// 1.设置旋转矩阵 2.将旋转矩阵传入着色器 3.清理画板 4.绘制
+// 平移 + 缩放 + 旋转 => 模型矩阵 => 旋转 * 缩放 * 平移
+function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix){
+    // 设置旋转矩阵
+    modelMatrix.setRotate(currentAngle, 0, 0, 1);
+    modelMatrix.scale(0.5, 0.5, 0.5);
+    modelMatrix.translate(0.35, 0, 0);
+    
+    // 传入着色器
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    
+    // 清理画板
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    
+    // 绘制
+    gl.drawArrays(gl.TRIANGLES, 0, n);
+}
+```
+
