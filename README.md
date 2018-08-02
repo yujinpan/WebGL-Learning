@@ -475,3 +475,51 @@ gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, FSIZE * 3, FSIZE * 2);
 gl.enableVertexAttribArray(a_PointSize);
 ```
 
+#### 修改颜色(varying 变量)
+> `uniform` 变量是“一致的”，而不是“可变的(`varying`)”，不能为每一个顶点准备一个值，所以所有的点都是同一个颜色。`varying` 变量的作用是从顶点着色器向片元着色器传输数据。
+```
+// 顶点着色器
+const VSHADER_SOURCE = `
+    // 存储限定符
+    attribute vec4 a_Position;
+
+    // 声明传入的 JavaScript 变量
+    attribute vec4 a_Color;
+
+    // 声明 varying 变量，传递给片元着色器
+    varying vec4 v_Color;
+    void main() {
+        // 设置坐标
+        gl_Position = a_Position;
+        gl_PointSize = 10.0;
+
+        // 将数据传给片元着色器
+        v_Color = a_Color;
+    }
+`;
+
+// 片元着色器
+const FSHADER_SOURCE = `
+    precision mediump float;
+    varying vec4 v_Color;
+    void main() {
+        // 从顶点着色器接收数据
+        gl_FragColor = v_Color;
+    }
+`;
+
+// 顶点坐标与颜色集合
+var verticesColors = new Float32Array([
+    0, 0.5, 1.0, 0.0, 0.0, 
+    -0.5, -0.5, 0.0, 1.0, 0.0,
+    0.5, -0.5, 0.0, 0.0, 1.0
+]);
+
+// ...
+gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 5, 0);
+
+// ...
+var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 2);
+```
+
