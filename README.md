@@ -429,3 +429,49 @@ function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix){
 }
 ```
 
+#### 创建多个缓冲区对象
+> 使用多个缓冲区对象向着色器传递多种数据，比较适合数量不大的情况。当程序中的复杂三维图具有成千上万顶点时，维护所有的顶点是很困难的。WebGL 允许我们把顶点的坐标和尺寸数据打包到同一缓冲区对象中，并通过某种机制分别访问缓冲区对象中不同种类的数据。
+```
+// 顶点着色器
+var VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    attribute float a_PointSize;
+    void main() {
+        gl_Position = a_Position;
+        gl_PointSize = a_PointSize;
+    }
+`;
+
+// 顶点坐标与尺寸集合
+var verticesSizes = new Float32Array([
+    0.0, 0.5, 10.0,     // 第一个点
+    -0.5, -0.5, 20.0,   // 第二个点
+    0.5, -0.5, 30.0     // 第三个点
+]);
+
+// 创建缓冲区对象
+var vertexSizeBuffer = gl.createBuffer();
+
+// 将顶点坐标与尺寸写入缓冲区并开启
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexSizeBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, verticesSizes, gl.STATIC_DRAW);
+
+// 获取数据每个单位的大小
+var FSIZE = verticesSizes.BYTES_PER_ELEMENT;
+
+// 获取 a_Position 的存储位置，分配缓冲区并开启
+var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+// 这里的 a_Position 是每隔三个数据，取 0 - 2(不包含index = 2) 的数据
+// 2 为每组数据大小
+// FSIZE * 3 为每隔三个数据为一组
+// 0 为从数据 index = 0 开始算
+gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 3, 0);
+gl.enableVertexAttribArray(a_Position);
+
+// a_PointSize 与 a_Position 分配类似
+var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+// 这里的 a_PointSize 是每个三个数据，取 2 的数据
+gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, FSIZE * 3, FSIZE * 2);
+gl.enableVertexAttribArray(a_PointSize);
+```
+
