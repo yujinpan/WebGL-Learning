@@ -57,7 +57,7 @@ gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 gl.clear(gl.COLOR_BUFFER_BIT);
 
-gl.drawArrays(gl.LINES, 0, n);
+gl.drawArrays(gl.POINTS, 0, n);
 
 /**
  * 1.创建顶点缓冲区对象

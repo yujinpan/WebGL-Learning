@@ -22,6 +22,8 @@ module.exports = {
         publicPath: '/'
     },
 
+    devtool: 'source-map',
+
     // 本地服务器
     devServer: {
         // 服务器文件路径
@@ -126,14 +128,23 @@ module.exports = {
             dry: false
         }),
 
-        // 提取公共模块
+        // 提取第三方模块
         new webpack.optimize.CommonsChunkPlugin({
-
-            // 对应entry数组vender
             name: 'vendor',
             filename: 'js/vendor-[chunkhash:6].js',
+            minChunks: function(module) {
+                return (
+                    module.resource &&
+                    /\.js$/.test(module.resource) &&
+                    module.resource.indexOf(__dirname + './node_modules') === 0
+                );
+            }
+        }),
 
-            // 保证没有其他模块打包进该模块
+        // 提取自定义公共模块
+        new webpack.optimize.CommonsChunkPlugin({
+            name: 'common',
+            filename: 'js/common-[chunkhash:6].js',
             minChunks: Infinity
         }),
 
